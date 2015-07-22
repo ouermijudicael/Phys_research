@@ -1,0 +1,9 @@
+------------------------------07/02/2015------------------------------------------------------
+1. understand how the mean path is calculated
+2. how he curves holl in ti
+3. I am getting an infinite loop for 4 particules
+4. understand and controle the loop
+---------------------------------07/08/2015----------------------------------------------------
+1. Understand the hole
+
+
