@@ -1,31 +1,10 @@
 !======================================================================
 !
-!     Version:  May 12
+!     Version:  July 21 2015
 !     This file contains tools for our scattering to operate 
 !     properly (matix operation)
 !
 !======================================================================
-
-
-!!!!!!!!!Main program to test the diferent subroutine!!!!!!!!
-!program test
-!    real, dimension(4):: vect_in_lab_frame, vect_in_photon_frame
-!    real, dimension(4):: vect_in_lab_frame_result, vect_in_photon_frame1
-!    real u, v, w, e
-!    u = 1/sqrt(3.00)
-!    v = 1/sqrt(3.00)
-!    w = 1/sqrt(3.00)
-!    e = 0.00
-!    vect_in_lab_frame = (/u, v, w, e/)
-!    vect_in_photon_frame1 = (/0, 0, 1, 0/)
-!    
-!    !!!!!!!!!!! call for rotating in the photon frame !!!!!!!!!!
-!    print*, "initial photon direction in lab frame:  ", vect_in_lab_frame 
-!    call rotate_in_photon_frame(vect_in_lab_frame, vect_in_photon_frame)
-!    print*,"photon direction in photon fram after rotation to photon frame:", vect_in_photon_frame
-!    call rotate_in_lab_frame(vect_in_lab_frame, vect_in_photon_frame1, vect_in_lab_frame_result)
-!    print*, "photon direction in lab frame after rotation from photon frame to lab frame:", vect_in_lab_frame_result
-!end program test
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!! This subroutine rotates into the phton frame !!!!!!!!!

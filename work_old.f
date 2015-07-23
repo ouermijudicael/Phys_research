@@ -2,7 +2,7 @@
 
 c======================================================================
 c
-c     Version: 2015 July 21
+c     Version: 2015 July 08
 c
 c     current(i):   photon position
 c     direction(i): photon direction cosines
@@ -20,13 +20,13 @@ c======================================================================
      &          absal(jmax1,jmax1,kmax1)
       dimension current(3),direction(3)
       common/c3/nref(nmu),ntrans(nmu)
-      common debug 
-
+      common debugging
+ 
       data nref/nmu*0/
       data ntrans/nmu*0/
 
 c**********************************************************************
-      debug = 1
+      debugging = 1
       pi=acos(-1.0d0)
       twopi=2.0d0*pi
 
@@ -108,7 +108,7 @@ c8        write(8,*) n,rand_num,absal(nx,ny,nz)
       else 
 
 c    scattered:
-
+    
         u=direction(1)
         v=direction(2)
         w=direction(3)
@@ -116,7 +116,9 @@ c    scattered:
         direction(1)=u
         direction(2)=v
         direction(3)=w
-
+        if(debugging.eq.1) then
+            print*, "direction =", direction
+        endif
       endif
 
       go to 100 
@@ -160,61 +162,64 @@ c======================================================================
 
 c======================================================================
 
-!      subroutine scat(u,v,w)
-!
+      subroutine scat(u,v,w)
+
 c  subroutine scat applies the scattering phase function, P(theta), 
 c  for isotropic scattering and Rayleigh scattering to find 
 c  the photon scattering angles, theta and phi
 
 c  on input, the variables u,v,w are the initial direction cosines,
 c  on exit, u,v,w are the direction cosines of the scattered photon.
-!
-!      pi=acos(-1.0d0)
-!      twopi=2.0d0*pi
-!
-!      p12=1.0d0/2.0d0
-!      p13=1.0d0/3.0d0
-!      p14=1.0d0/4.0d0
-!
-!c  set nscat = 0 ===> isotropic scattering
-!c      nscat = 1 ===> Rayleigh scattering
-!c      nscat = 2 ===> Henyey-Greenstein scattering
-!
-!      nscat=1
 
-!c  isotropic scattering: probabiliy of scattering into a given solid
-!c                        angle element, dOmega; given by cos(theta)
-!
-!      if(nscat.eq.0) then 
-!        a=2.0d0*rand()-1.0d0
-!      endif
+      common debugging
+      pi=acos(-1.0d0)
+      twopi=2.0d0*pi
+
+      p12=1.0d0/2.0d0
+      p13=1.0d0/3.0d0
+      p14=1.0d0/4.0d0
+
+c  set nscat = 0 ===> isotropic scattering
+c      nscat = 1 ===> Rayleigh scattering
+c      nscat = 2 ===> Henyey-Greenstein scattering
+
+      nscat=1
+
+c  isotropic scattering: probabiliy of scattering into a given solid
+c                        angle element, dOmega; given by cos(theta)
+      if(debugging.eq.1) then
+          print*, "entering scatering routine"
+      endif
+      if(nscat.eq.0) then 
+        a=2.0d0*rand()-1.0d0
+      endif
 
 c  rayleigh scattering: probability of scattering into solid
 c                       angle element, d(Omega), given by 
 c                       (3/4)(cos[theta]+(1/3)cos^3[theta])
-!          
-!      if(nscat.eq.1) then                        
-!        phase=2.0d0*(0.5d0-rand())
-!        q=-4.0d0*phase 
-!        disc=sqrt(1.0d0+p14*q**2)
-!        a1=(-p12*q+disc)**p13
-!        a2=-(p12*q+disc)**p13
-!        a=a1+a2
-!      endif
-! 
-!c  henyey-greenstein scattering: probability of scattering into 
-!c                    solid angle element, d(Omega)
-!          
-!      if(nscat.eq.2) then
-!        g=0.1
-!        g2=g*g
-!        a=0.5*(1.0+g2-((1.0-g2)/(1.0-g+2.0*g*rand()))**2)/g
-!      endif
-!
-!c  axially symmetric scattering
-!
-!      delta=twopi*rand()
-!
+          
+      if(nscat.eq.1) then                        
+        phase=2.0d0*(0.5d0-rand())
+        q=-4.0d0*phase 
+        disc=sqrt(1.0d0+p14*q**2)
+        a1=(-p12*q+disc)**p13
+        a2=-(p12*q+disc)**p13
+        a=a1+a2
+      endif
+ 
+c  henyey-greenstein scattering: probability of scattering into 
+c                    solid angle element, d(Omega)
+          
+      if(nscat.eq.2) then
+        g=0.1
+        g2=g*g
+        a=0.5*(1.0+g2-((1.0-g2)/(1.0-g+2.0*g*rand()))**2)/g
+      endif
+
+c  axially symmetric scattering
+
+      delta=twopi*rand()
+
 c  find the direction cosines for the scattered photon in the frame
 c  where the initial direction of the photon's motion defines the z-axis. 
 c  next, transform back to the lab frame to continue the walk.
@@ -224,33 +229,32 @@ c  transformation rotates the lab frame about the y-axis to return the
 c  z-axis to its original direction. the second rotates the frame about 
 c  the new (old) z-axis to return the x and y axes to their original 
 c  directions.
-!
-!      b=sqrt(1.0d0-a*a)
-!      c=cos(delta)
-!      d=sin(delta)
-!
-!      bc=b*c
-!      bd=b*d
-!      aw=a*w
-!      bcw=bc*w
-!      sinlab=sqrt(1.0d0-w*w)
-!
-!c  transform direction cosines to lab frame
-!
-!      uf=(bcw*u-bd*v)/sinlab+a*u
-!      vf=(bcw*v+bd*u)/sinlab+a*v
-!      wf=-bc*sinlab+a*w
-!
-!c  make sure the direction cosines have length 1
-!
-!      coslength=sqrt(uf*uf+vf*vf+wf*wf)
-!
-!      u=uf/coslength
-!      v=vf/coslength
-!      w=wf/coslength
-!
-!      return
-!      end
+
+      b=sqrt(1.0d0-a*a)
+      c=cos(delta)
+      d=sin(delta)
+
+      bc=b*c
+      bd=b*d
+      aw=a*w
+      bcw=bc*w
+      sinlab=sqrt(1.0d0-w*w)
+
+c  transform direction cosines to lab frame
+
+      uf=(bcw*u-bd*v)/sinlab+a*u
+      vf=(bcw*v+bd*u)/sinlab+a*v
+      wf=-bc*sinlab+a*w
+
+c  make sure the direction cosines have length 1
+
+      coslength=sqrt(uf*uf+vf*vf+wf*wf)
+
+      u=uf/coslength
+      v=vf/coslength
+      w=wf/coslength
+      return
+      end
 
 c======================================================================
 
@@ -260,11 +264,17 @@ c======================================================================
       common/c1/xmfp(jmax1,jmax1,kmax1),xint(jmax1,jmax1,kmax1),
      &          absal(jmax1,jmax1,kmax1)
 
+      common debugging
 c  set up the computational grid
 
       deltax=1.0
       deltay=1.0
       deltaz=1.0
+
+      if(debugging.eq.1) then
+          print*, "entering grid routine"
+      endif
+
       do j=1,jmax1
         x(j)=(j-1)*deltax
         y(j)=(j-1)*deltay
@@ -274,8 +284,11 @@ c  set up the computational grid
       enddo 
 
 c  set mean free path, xmfp(q,j,k), in each compuational cell, (j,k)
-
-      taumax=10.0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! taumax --> optical depth
+!! delta --> correspond to the optical depth travel before interaction
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      taumax=10.0      ! optical depth
       epsilon=exp(2.0*alog(taumax)/kmax)
       write(6,*) taumax,epsilon
       do j=1,jmax1
@@ -291,10 +304,19 @@ c  set mean free path, xmfp(q,j,k), in each compuational cell, (j,k)
             if(k.ge.3*kmax/4) delta=1.0e6
           enddo
           xmfp(i,j,kmax1)=xmfp(i,j,kmax)
+
+          ! this if is just for testing
+          if(xmfp(i,j, kmax1) /= 0) then
+!              print*, "mean free path =", xmfp(i,j,kmax1)
+          end if
         enddo
       enddo
 
 c  carve a hole in the center of the slab
+! ncut --> 
+! nout -->
+! jmax -->
+! nradius -->
 
       ncut=5
       ncut=ncut*ncut
@@ -311,9 +333,17 @@ c  carve a hole in the center of the slab
           xout=nout
           xopen=(1.0+xradius/xout) 
           do k=1,kmax1
+           if(debugging.eq.1) then
+               print*, "before xmfp(",i," ",j," ",k,") =", xmfp(i,j,k)
+           endif
 !!
            xmfp(i,j,k)=soften*xmfp(i,j,k)*xopen
-!!
+           if(debugging.eq.1) then
+               print*, "after xmfp(",i," ",j," ",k,") =", xmfp(i,j,k)
+           endif
+           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!         !! Why is the mean free path is big after curving the hole
+           !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(i.eq.jmax/2+1)  then 
               write(10,*) j,k,deltax/xmfp(i,j,k)
               tauz=tauz+deltax/xmfp(i,j,k)
@@ -370,12 +400,16 @@ c======================================================================
      &          absal(jmax1,jmax1,kmax1)
       dimension current(3),direction(3)
       common/c3/nref(nmu),ntrans(nmu)
+      common debugging
 
 c***********************************************************************
 
       nesc=0
       stepsum=0.0
-
+      
+      if(debugging.eq.1) then
+          print*, "entering travel routine"
+      endif
 c   is the photon moving up or down?
 
       if(direction(3).gt.0.0) then
@@ -391,6 +425,10 @@ c       is the photon moving forward or backward?
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
  110        continue                        ! up and right and forward
+ 
+            if(debugging.eq.1) then
+                print*, "up and right forward"
+            endif
 
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
@@ -398,7 +436,14 @@ c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             taux=(x(nx+1)-current(1))/xmfp(nx,ny,nz)
             tauy=(y(ny+1)-current(2))/xmfp(nx,ny,nz)
             tauz=(z(nz+1)-current(3))/xmfp(nx,ny,nz)
-
+            if(debugging.eq.1) then
+                print*, "stepx =", stepx
+                print*, "stepy =", stepy
+                print*, "stepz =", stepz
+                print*, "taux =", taux
+                print*, "tauy =", tauy
+                print*, "tauz =", tauz
+            endif
             if(stepx.gt.taux .or. stepy.gt.tauy .or. stepz.gt.tauz) then
               sx=(x(nx+1)-current(1))/direction(1)
               sy=(y(ny+1)-current(2))/direction(2)
@@ -473,6 +518,10 @@ cside                    ntrans(-mu+1)=ntrans(-mu+1)+1
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
  111        continue                        ! up and right and backward
+
+            if(debugging.eq.1) then
+                print*, "up and right backward"
+            endif
 
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
@@ -564,6 +613,10 @@ c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
  112        continue                        ! up and left and forward
 
+            if(debugging.eq.1) then
+                print*, "up and left and forward"
+            endif
+
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
             stepz=(step-stepsum)*direction(3)
@@ -645,6 +698,10 @@ cside                    ntrans(-mu+1)=ntrans(-mu+1)+1
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
  113        continue                        ! up and left and backward
+
+            if(debugging.eq.1) then
+                print*, "up and left and backward"
+            endif
 
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
@@ -744,6 +801,10 @@ c         is the photon moving forward or backward?
 
  120        continue                        ! down and right and forward
 
+            if(debugging.eq.1) then
+                print*, "down and right and forward"
+            endif
+
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
             stepz=(step-stepsum)*direction(3)
@@ -825,6 +886,9 @@ cside                    ntrans(-mu+1)=ntrans(-mu+1)+1
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
  121        continue                        ! down and right and backward
+            if(debugging.eq.1) then
+                print*, "down and right and backward"
+            endif
 
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
@@ -914,6 +978,10 @@ c         is photon going forward or backward?
 
  122        continue                        ! down and left and forward
 
+            if(debugging.eq.1) then
+                print*, "down and left and forward"
+            endif
+
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
             stepz=(step-stepsum)*direction(3)
@@ -995,6 +1063,10 @@ cside                    ntrans(-mu+1)=ntrans(-mu+1)+1
 c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
  123        continue                        ! down and left and backward
+
+            if(debugging.eq.1) then
+                print*, "down and left and backward"
+            endif
 
             stepx=(step-stepsum)*direction(1)
             stepy=(step-stepsum)*direction(2)
@@ -1079,10 +1151,20 @@ c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         endif
 
       endif
+ 200  if(debugging.eq.1) then
+          print*, "currentx = ", current(1)
+          print*, "currenty = ", current(2)
+          print*, "currentz = ", current(3)
+      endif
+      return
 
- 200  return
+ 1000 if(debugging.eq.1) then
+          print*, "currentx = ", current(1)
+          print*, "currenty = ", current(2)
+          print*, "currentz = ", current(3)
+      endif
 
- 1000 nesc=1
+      nesc=1
       return
 
       end
