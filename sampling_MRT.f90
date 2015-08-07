@@ -5,31 +5,6 @@
 !     Commented print statements are for degguging and testing the 
 !     final version won't have those
 !======================================================================
-
-
-
-!!!!!!The program test is just for testing my sampling and 
-!!!!!!my matrices !!!!!!!!!!!!!!!!!!!!!!!!!!!
-!program test
-!
-!    real:: j
-!    real, dimension(4):: vect
-!    vect(1) = 0.00
-!    vect(2) = 0.00
-!    vect(3) = 1.00
-!    vect(4) = 0.00
-!    j = 0
-!
-!    !!!!!!!!!! test cases for rorating from photon frame to lab frame!!!!!
-!    !call test_rotate_in_lab_frame    
-!    CALL RANDOM_SEED()
-!do while(j <=3)
-!    call scat( vect(1), vect(2), vect(3) )
-!    print*,"new_vect =", "(", vect,")"
-!    j = j+1
-!end do
-!end program test
-
 !!!!!!!!!!!!!!!!!!Main prgram to test the different subroutine!!!!!!!!!!!!!!!!!!!
 subroutine scat(val_u, val_v, val_w)
     real val_u, val_v, val_w

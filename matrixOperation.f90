@@ -1,6 +1,6 @@
 !======================================================================
 !
-!     Version:  July 21 2015
+!     Version:  August 6 2015
 !     This file contains tools for our scattering to operate 
 !     properly (matix operation)
 !
@@ -194,7 +194,7 @@ end subroutine InvertMatrix_4X4
     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!Muller Matrix!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-subroutine MullerMatrix(alpha)
+subroutine MullerMatrix(alpha, L)
     real, dimension(4, 4):: L
     real alpha
     L(1, 1) = 1.00
@@ -278,3 +278,21 @@ subroutine normalize(vect)
     vect(3) = vect(3) / temp
     vect(4) = vect(4) / temp
 end subroutine normalize
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! this subroutine uses vetor componants to !
+! find angle theta and phi                 !
+subroutine getThetaPhi(u, v, w, phi1, theta1)
+    real :: u, v, w
+    real :: theta1, phi1
+    phi1 = atan(v/u)
+    theta1 = atan( sqrt(u*u + v*v) / w)
+
+end subroutine getThetaPhi
+
+
+subroutine getUVW(phi, theta, u, v, w)
+    u = cos(phi)*sin(theta)
+    v = sin(phi)*sin(theta)
+    w = cos(theta)
+end subroutine getUVW
