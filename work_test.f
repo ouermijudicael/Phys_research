@@ -1,8 +1,9 @@
+
       program monte
 
 c======================================================================
 c
-c     Version: 2015 April 8
+c     Version: 2015 September 30
 c
 c     current(i):   photon position
 c     direction(i): photon direction cosines
@@ -34,9 +35,12 @@ c**********************************************************************
       twopi=2.0d0*pi
 
 c**********************************************************************
-
+c      call traveltest
+c      call gridtest
+      call scattest
       write(6,*) 'Enter nphot(photons=2**nphot), output interval, seed'
       read(5,10)   nphot,nout,nseed
+      print*, "nphot, nout, nseed =",nphot,", ",nout,", ",nseed
       nphot=2**nphot
  10   format(3i12)
       write(6,10) nphot
@@ -50,7 +54,8 @@ c======================================================================
 c   Loop over individual photon trajectories. Run nphot photons.
 
       do nset = 1,nphot
-
+      
+      print*, "photon =", nset
 c  photon: initial position and direction cosines 
 
 c    initial direction 
@@ -78,32 +83,37 @@ c    initial position
       current(2)=y(ny)
       current(3)=z(nz)
       lunit=8
- 
+c     save info for debugging purposes
 c  start random walk
+      print*, "absal =", absal(nx, ny, nz)
+      print*, "internal energy =", xint(nx, ny, nz)
 
       nabs=0
       n=0
  100  n=n+1
 
+c      print*,"pos=(",current(1),", ",current(2),", ",current(3),")"
+c      print*,"dir=(",direction(1),",",direction(2),",",direction(3),")"
 c  step: distance to next interaction in units of optical depth
  
       rand_num=rand() 
       step=-alog(rand_num)
 
 c    check: how many cells does the photon cross?
-c      print*, "current= (", current(1),current(2), current(3), ")"
       call travel(nx,ny,nz,step,nesc,current,direction)
-c      print*, "currenti Aft= (", current(1),current(2), current(3), ")"
+      print*,"nesc = ", nesc
       if(nesc.eq.1) go to 1000
 
 c  check: was photon absorbed or scattered?
-
+c      absal(nx, ny, nz) = .01
       rand_num=rand()
+c      print*, "rand_num=", rand_num
+c      print*, "absal =", absal(nx, ny, nz)
 c8      write(8,*) n,rand_num,absal(nx,ny,nz)
       if(rand_num.lt.absal(nx,ny,nz)) then
 
 c    absorbed:
-
+        print*, "the photon was absorbed"
         xint(nx,ny,nz)=xint(nx,ny,nz)+1.0
 c8        write(8,*) n,rand_num,absal(nx,ny,nz)
         nabs=1
@@ -116,10 +126,10 @@ c    scattered:
         u=direction(1)
         v=direction(2)
         w=direction(3)
-        print*, "Before (u, v, w) = (", u, ", ",v, ", ", w, ")"
+c        print*, "Before (u, v, w) = (", u, ", ",v, ", ", w, ")"
         !call scat(u,v,w)
         S = (/1.00, 0.00, 0.00, 0.00/)
-        !call scat2(u,v,w, S)
+c        call scat2(u,v,w, S)
         call im_scat(u,v,w)
         direction(1)=u
         direction(2)=v
@@ -166,6 +176,21 @@ c======================================================================
  3100 format(5i8)
 
       end 
+
+
+c====================================================================
+c  This subroutine is to test the sactering routine
+c====================================================================
+       subroutine scattest
+       u = 1/sqrt(3.00)
+       v = 1/sqrt(3.00)
+       w = 1/sqrt(3.00)
+c       S = (/1.00, 0.00, 0.00, 0.00/)
+       do i=0, 10000
+           call scat2(u, v, w)
+           print*,"u, v, w = (", u, v, w,")"
+       enddo
+       end
 
 c======================================================================
 !
@@ -261,6 +286,27 @@ c  make sure the direction cosines have length 1
 !      return
 !      end
 
+
+c======================================================================
+c testing grid routine 
+c=======================================================================
+      subroutine gridtest
+     
+      parameter(jmax=100,jmax1=jmax+1,kmax=50,kmax1=kmax+1)
+      common/c2/x(jmax1),y(jmax1),z(kmax1)
+      common/c1/xmfp(jmax1,jmax1,kmax1),xint(jmax1,jmax1,kmax1),
+     &          absal(jmax1,jmax1,kmax1)
+      call grid
+      nx=jmax/2 - 1
+      ny=jmax/2 - 1
+      nz=kmax/2+1 - 1
+      print*, "(nx, ny, nz)= (",nx,",",ny,",",",",nz,")"
+      print*, "(x,y,z) =",x(nx),",",y(ny),",",z(nz)
+      print*, "xmfp =", xmfp(nx,ny,nz)
+      print*, "xint =", xint(nx, ny, nz)
+      print*, "absal =", absal(nx,ny,nz)
+      end
+
 c======================================================================
 
       subroutine grid
@@ -270,7 +316,7 @@ c======================================================================
      &          absal(jmax1,jmax1,kmax1)
 
 c  set up the computational grid
-
+      print*, "Entering grid routine"
       deltax=1.0
       deltay=1.0
       deltaz=1.0
@@ -340,6 +386,7 @@ c  initialize the internal energy array
       do j=1,jmax1
         do i=1,jmax1
           do k=1,kmax1
+            test1 = 20
             xint(j,i,k)=0.0d00
           enddo
         enddo
@@ -350,13 +397,67 @@ c  set absorption-to-(absorption+scattering) fraction
       do j=1,jmax1
         do i=1,jmax1
           do k=1,kmax1
+            test2 = 30
             absal(j,i,k)=0.01
           enddo
         enddo
       enddo
 c
+      print*, "Leaving grid routine"
       return
       end 
+
+!==========================================================================!
+! Testing the travel routine                                               !
+!==========================================================================!
+
+      subroutine traveltest
+      parameter(jmax=100,jmax1=jmax+1,kmax=50,kmax1=kmax+1)
+      parameter(nmu=30)
+      real*8 current,direction,xmfp
+      common/c2/x(jmax1),y(jmax1),z(kmax1)
+      common/c1/xmfp(jmax1,jmax1,kmax1),xint(jmax1,jmax1,kmax1),
+     &          absal(jmax1,jmax1,kmax1)
+      dimension current(3),direction(3)
+      common/c3/nref(nmu),ntrans(nmu)
+
+      call grid
+
+c     initial position 
+      nx=jmax/2
+      ny=jmax/2
+      nz=kmax/2+1
+      current(1)=x(nx)
+      current(2)=y(ny)
+      current(3)=z(nz)
+      
+      direction(1)= 1 / sqrt(3.00)
+      direction(2)= 1 / sqrt(3.00)
+      direction(3)= 1 / sqrt(3.00)
+      step = -alog(rand())
+      print*, " ------BEFORE TRAVEL------"
+      print*, "position ="
+      print*,current(1),", ",current(2),", ",current(3)
+      print*, "direction ="
+      print*,direction(1),",",direction(2),"," ,direction(3)
+      print*,"(nx, ny, nz) ="
+      print*,nx,", ", ny,", ", nz
+      print*, "nesc =", nesc
+      print*, "step =", step
+      call travel(nx,ny,nz,step,nesc,current,direction)
+      print*, " ------AFTER TRAVEL------"
+      print*, "position ="
+      print*,current(1),", ",current(2),", ",current(3)
+      print*, "direction ="
+      print*,direction(1),",",direction(2),"," ,direction(3)
+      print*,"(nx, ny, nz) ="
+      print*,nx,", ", ny,", ", nz
+      print*, "nesc =", nesc
+      print*, "step =", step
+      
+      end     
+
+
 
       subroutine travel(nx,ny,nz,step,nesc,current,direction)
 
@@ -381,7 +482,7 @@ c======================================================================
       common/c3/nref(nmu),ntrans(nmu)
 
 c***********************************************************************
-
+c      print*, "Entering travel "
       nesc=0
       stepsum=0.0
 
@@ -1089,9 +1190,16 @@ c++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
       endif
 
- 200  return
+ 200    return  
+c      print*, "leaving travel"
+c      print*,"pos=(",current(1),", ",current(2),", ",current(3),")"
+c      print*,"dir=(",direction(1),",",direction(2),",",direction(3),")"
+c      return
 
  1000 nesc=1
+c      print*, "Leaving travel "
+c      print*,"pos=(",current(1),", ",current(2),", ",current(3),")"
+c      print*,"dir=(",direction(1),",",direction(2),",",direction(3),")"
       return
 
       end

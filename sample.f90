@@ -7,16 +7,22 @@
 
 !!!!!!!!!!!!!!!!!!!
 ! scat subroutine !
-subroutine scat2(u, v, w, S_old)
+subroutine scat2(u, v, w)
     real:: u, v, w
     real, dimension(4):: S_old, S_new
     real:: i1, theta1, phi1, big_theta, i2, theta2, phi2
     call getThetaPhi(u, v, w, phi1, theta1)
+    print*,"(phi1 , theta1) = (", phi1, ", ", theta1, ")"
     call samplei1(i1)
+    print*, "i1 =", i1
     call sampleBigTheta(i1, big_theta)
+    print *, "bigtheta =", big_theta
+
     call calculatei2ThetaPhi(i1, theta1, phi1, big_theta, i2, theta2, phi2)
+    print*,"(phi2 , theta2) = (", phi2, ", ", theta2, ")"
+    print*, "i2 =", i2
     call calculateS(i1, i2, big_theta, S_old, S_new)
-    call getUVW(phi, theta, u, v, w)
+    call getUVW(phi2, theta2, u, v, w)
     S_old = S_new 
 
 end subroutine scat2
@@ -78,12 +84,26 @@ subroutine calculatei2ThetaPhi(i1, theta1, phi1, big_theta, i2, theta2, phi2)
     
     ! calculation of theta2 !
     theta2 = acos( cos(big_theta)*cos(theta1) + sin(big_theta)*sin(theta1)*cos(i1) )
+    
     ! calculation of i2 !
-    i2 = acos( ( cos(theta1)-cos(theta2)*cos(big_theta) ) / ( sin(theta2)*sin(big_theta) ) )
+    !if(sin(theta2)==0 .or. sin(big_theta) ==0)then
+    if( (sin(theta2)>=-0.0001 .and. sin(theta2)<=0.0001) .or. (sin(big_theta) >=-0.0001 .and. sin(big_theta)<= 0.0001) )then
+         i2 = 0
+    else
+         i2 = acos( ( cos(theta1)-cos(theta2)*cos(big_theta) ) / ( sin(theta2)*sin(big_theta) ) )
+    end if
 
     ! calculate phi2 !
     ! what happens when big_theta is positive or negative !
-    phi2 = -acos( (cos(big_theta)-cos(theta1)*cos(theta2) ) / ( sin(theta1)*sin(theta2) ) ) + phi1
+    !if(sin(theta1) == 0 .or. sin(theta2) == 0) then
+    if((sin(theta1) >= -0.0001 .and. sin(theta1)<=0.0001).or. (sin(theta2) >= -0.0001 .and. sin(theta2)<=0.0001)) then
+        phi2 = 0 + phi1
+    else
+!        angle =  (cos(big_theta)-cos(theta1)*cos(theta2) ) / ( sin(theta1)*sin(theta2) ) 
+!        print*, "a_angle =", angle
+        phi2 = 2
+!        phi2 = -acos( (cos(big_theta)-cos(theta1)*cos(theta2) ) / ( sin(theta1)*sin(theta2) ) ) + phi1
+    end if
 
 end subroutine calculatei2ThetaPhi
 
@@ -92,7 +112,7 @@ end subroutine calculatei2ThetaPhi
 ! using S_new = L(pi - i2)R L(-i1)                   !
 subroutine calculateS(i1, i2, big_theta, S_old, S_new)
     real :: i1, i2, big_theta
-    real, dimension(4):: Sold, S_new
+    real, dimension(4):: S_old, S_new
     real, dimension(4, 4)::L1, L2, R, LR, LRL 
     call MullerMatrix(i2, L2)
     call MullerMatrix(i1, L1)

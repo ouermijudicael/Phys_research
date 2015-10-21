@@ -285,8 +285,16 @@ end subroutine normalize
 subroutine getThetaPhi(u, v, w, phi1, theta1)
     real :: u, v, w
     real :: theta1, phi1
-    phi1 = atan(v/u)
-    theta1 = atan( sqrt(u*u + v*v) / w)
+    if(u == 0) then
+        phi1 = 0
+    else
+        phi1 = atan(v/u)
+    endif
+    if(w==0) then
+        theta1 = 0
+    else
+        theta1 = atan( sqrt(u*u + v*v) / w)
+    endif
 
 end subroutine getThetaPhi
 
